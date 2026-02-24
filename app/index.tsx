@@ -1,6 +1,8 @@
+import { supabase } from "@/lib/supabase";
 import { Text, View } from "react-native";
 
 export default function Index() {
+  console.log(supabase);
   return (
     <View
       style={{
@@ -12,4 +14,5 @@ export default function Index() {
       <Text>Hello World!</Text>
     </View>
   );
+
 }
