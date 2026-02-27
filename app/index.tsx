@@ -1,18 +1,13 @@
-import { supabase } from "@/lib/supabase";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Button, Text } from "react-native-paper";
 
 export default function Index() {
-  console.log(supabase);
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Hello World!</Text>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text variant="headlineMedium">Welcome to the Gym App!</Text>
+      <Button mode="contained" onPress={() => alert("Get Started!")}>
+        Get Started
+      </Button>
     </View>
   );
-
 }
