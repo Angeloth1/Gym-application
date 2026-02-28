@@ -1,4 +1,4 @@
-**# 🏋️ Gym Tracker App (Name Placeholder)
+# 🏋️ Gym Tracker App (Name Placeholder)
 
 A modern, frictionless fitness tracking application built with React Native (Expo) and Supabase. Designed to help users log their workouts seamlessly, track their progress, and participate in fitness challenges.
 
