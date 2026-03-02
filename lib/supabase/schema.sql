@@ -4,6 +4,7 @@ CREATE TABLE profiles (
   name TEXT NOT NULL,
   sex TEXT CHECK (sex IN ('m', 'f', 'other')),
   age INTEGER,
+  avatar_url TEXT, 
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
