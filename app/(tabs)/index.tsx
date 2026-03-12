@@ -3,17 +3,43 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../../lib/supabase/supabase';
 
-// Ορίζουμε τον τύπο για να μην γκρινιάζει το TypeScript
+// --- 1. TYPES ---
 type Exercise = {
   id: string | number;
   name: string;
   target_muscle_group: string;
 };
 
+type WorkoutSet = {
+  weight: number;
+  reps: number;
+};
+
+type ActiveExercise = {
+  id: string | number;
+  name: string;
+  target_muscle_group: string;
+  sets: WorkoutSet[];
+};
+
+// --- 2. MAIN COMPONENT ---
 export default function MainScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeWorkout, setActiveWorkout] = useState<ActiveExercise[]>([]);
+
+  const addExerciseToWorkout = (exerciseFromDb: Exercise) => {
+    const newExercise: ActiveExercise = {
+      id: exerciseFromDb.id,
+      name: exerciseFromDb.name,
+      target_muscle_group: exerciseFromDb.target_muscle_group,
+      sets: []  
+    };
+
+    setActiveWorkout([...activeWorkout, newExercise]);
+    setModalVisible(false);
+  };
 
   const fetchExercises = async () => {
     setLoading(true);
@@ -23,7 +49,7 @@ export default function MainScreen() {
       .order('name', { ascending: true });
 
     if (error) {
-      console.error('Σφάλμα κατά τη λήψη ασκήσεων:', error.message);
+      console.error('Σφάλμα Supabase:', error.message);
     } else {
       setExercises(data || []);
     }
@@ -34,27 +60,31 @@ export default function MainScreen() {
     fetchExercises();
   }, []);
 
+  // --- 3. UI (ΕΜΦΑΝΙΣΗ) ---
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Workout History</Text>
       <Text style={styles.subtitle}>Your completed workouts will appear here.</Text>
 
-      {/* Το Floating Action Button (FAB) */}
-      <Pressable style={styles.fab} onPress={() => setModalVisible(true)}>
+      {/* Το Floating Action Button (FAB) - ΔΙΟΡΘΩΜΕΝΟ */}
+      <Pressable 
+        style={styles.fab} 
+        onPress={() => {
+          setModalVisible(true);
+          fetchExercises(); // Τραβάει φρέσκα δεδομένα κάθε φορά που πατάς το +
+        }}
+      >
         <MaterialCommunityIcons name="plus" size={30} color="white" />
       </Pressable>
 
       {/* Το "Floater" Modal */}
       <Modal 
         visible={modalVisible} 
-        animationType="fade" // Απαλή εμφάνιση
-        transparent={true}   // Επιτρέπει να βλέπουμε το από πίσω
+        animationType="fade" 
+        transparent={true}   
         onRequestClose={() => setModalVisible(false)} 
       >
-        {/* Σκοτεινό φόντο που κλείνει το modal αν το πατήσεις απ' έξω */}
         <View style={styles.modalOverlay}>
-          
-          {/* Το Αιωρούμενο Κουτί (Floater) */}
           <View style={styles.floatingBox}>
             
             <View style={styles.modalHeader}>
@@ -71,12 +101,11 @@ export default function MainScreen() {
                 data={exercises}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                  <Pressable style={styles.exerciseItem} onPress={() => console.log('Επέλεξες:', item.name)}>
+                  <Pressable style={styles.exerciseItem} onPress={() => addExerciseToWorkout(item)}>
                     <Text style={styles.exerciseName}>{item.name}</Text>
                     <Text style={styles.exerciseMuscle}>{item.target_muscle_group}</Text>
                   </Pressable>
                 )}
-                // Περιορίζουμε το ύψος της λίστας για να μην ξεχειλώνει το floater
                 style={{ maxHeight: 400 }} 
               />
             )}
@@ -95,6 +124,7 @@ export default function MainScreen() {
   );
 }
 
+// --- 4. STYLES ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa', paddingTop: 20, paddingHorizontal: 20 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#111', marginTop: 20 },
@@ -106,23 +136,9 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 
   },
   
-  /* --- ΝΕΑ STYLES ΓΙΑ ΤΟ FLOATER --- */
-  modalOverlay: { 
-    flex: 1, 
-    backgroundColor: 'rgba(0,0,0,0.5)', // Σκούρο ημιδιαφανές φόντο
-    justifyContent: 'center', // Το κεντράρει κάθετα
-    alignItems: 'center',     // Το κεντράρει οριζόντια
-    padding: 20 
-  },
-  floatingBox: { 
-    width: '100%', 
-    backgroundColor: '#fff', 
-    borderRadius: 20, // Στρογγυλεμένες γωνίες
-    overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 10 // Σκιά για βάθος
-  },
-  /* --------------------------------- */
-
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  floatingBox: { width: '100%', backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 10 },
+  
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#eee' },
   modalTitle: { fontSize: 18, fontWeight: 'bold' },
   closeButton: { padding: 5 },
