@@ -62,3 +62,14 @@ CREATE TABLE workout_exercises (
   weight NUMERIC NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ενημέρωση του πίνακα exercises με τις νέες κατηγορίες
+ALTER TABLE exercises 
+ADD COLUMN has_weights BOOLEAN DEFAULT TRUE,
+ADD COLUMN equipment_type TEXT CHECK (equipment_type IN ('machine', 'smith', 'barbell', 'dumbbell', 'bodyweight')) DEFAULT 'barbell';
+
+-- Παράδειγμα ενημέρωσης δεδομένων
+UPDATE exercises SET equipment_type = 'barbell', has_weights = TRUE WHERE name ILIKE '%bench press%';
+UPDATE exercises SET equipment_type = 'dumbbell', has_weights = TRUE WHERE name ILIKE '%dumbbell%';
+UPDATE exercises SET equipment_type = 'machine', has_weights = TRUE WHERE name ILIKE '%lat pulldown%';
+UPDATE exercises SET equipment_type = 'bodyweight', has_weights = FALSE WHERE name ILIKE '%push up%';

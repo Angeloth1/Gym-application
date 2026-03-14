@@ -7,7 +7,6 @@ export default function TabLayout() {
     <Tabs 
       screenOptions={{ 
         tabBarActiveTintColor: '#007AFF',
-        // Βάζοντας το headerRight ΕΔΩ, εμφανίζεται σε ΟΛΕΣ τις οθόνες των tabs!
         headerRight: () => (
           <Link href="/profile" asChild>
             <Pressable style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
