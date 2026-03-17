@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, Vibration, View } from 'react-native';
 import { colors, globalStyles as styles } from './styles/globalStyle';
@@ -8,12 +8,13 @@ type SetRecord = { id: number; weight: string; reps: string; };
 
 export default function ExerciseScreen() {
   const router = useRouter();
-
-  const [exerciseData] = useState({
-    name: "Bench Press",
-    has_weights: true,
-    equipment_type: 'barbell' as EquipmentType
-  });
+  const params = useLocalSearchParams();
+  const exerciseData= {
+    id: params.id as string,
+    name: (params.name as string)|| "Unknown Exercise",
+    equipment_type: (params.equipment_type as EquipmentType) || 'barbell',
+    has_weights: params.has_weights === 'true'
+  }
 
   // --- STATES ---
   const [inSet, setInSet] = useState(true); 

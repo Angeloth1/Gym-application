@@ -10,6 +10,8 @@ type Exercise = {
   id: string | number;
   name: string;
   target_muscle_group: string;
+  equipment_type?: string;
+  has_weights?: boolean;
 };
 
 type WorkoutSet = {
@@ -105,7 +107,21 @@ export default function MainScreen() {
                 data={exercises}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                  <Pressable style={styles.listItem} onPress={() => {setModalVisible(false); router.push('/exercise');}}>
+                  <Pressable 
+                    style={styles.listItem} 
+                    onPress={() => { 
+                      setModalVisible(false); 
+                      router.push({
+                        pathname: '/exercise',
+                        params: { 
+                          id: item.id.toString(), // Το κάνουμε string για να μην γκρινιάζει το router
+                          name: item.name,
+                          equipment_type: item.equipment_type || 'barbell',
+                          has_weights: item.has_weights === false ? 'false' : 'true'
+                        }
+                      });
+                    }}
+                    >
                     <Text style={styles.listItemTitle}>{item.name}</Text>
                     <Text style={styles.listItemSubtitle}>{item.target_muscle_group}</Text>
                   </Pressable>
