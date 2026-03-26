@@ -1,9 +1,16 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Pressable, Text, View } from 'react-native';
-import { supabase } from '../../lib/supabase/supabase';
-import { colors, globalStyles as styles } from '../styles/globalStyle'; // <-- UNIVERSAL STYLES
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
+import { supabase } from "../../lib/supabase/supabase";
+import { colors, globalStyles as styles } from "../../styles/globalStyle"; // <-- UNIVERSAL STYLES
 
 // --- 1. TYPES ---
 type Exercise = {
@@ -29,7 +36,7 @@ type ActiveExercise = {
 // --- 2. MAIN COMPONENT ---
 export default function MainScreen() {
   const router = useRouter();
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +47,7 @@ export default function MainScreen() {
       id: exerciseFromDb.id,
       name: exerciseFromDb.name,
       target_muscle_group: exerciseFromDb.target_muscle_group,
-      sets: []  
+      sets: [],
     };
 
     setActiveWorkout([...activeWorkout, newExercise]);
@@ -50,12 +57,12 @@ export default function MainScreen() {
   const fetchExercises = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('exercises')
-      .select('*')
-      .order('name', { ascending: true });
+      .from("exercises")
+      .select("*")
+      .order("name", { ascending: true });
 
     if (error) {
-      console.error('Σφάλμα Supabase:', error.message);
+      console.error("Σφάλμα Supabase:", error.message);
     } else {
       setExercises(data || []);
     }
@@ -70,73 +77,88 @@ export default function MainScreen() {
   return (
     <View style={styles.mainContainer}>
       <Text style={styles.pageTitle}>Workout History</Text>
-      <Text style={styles.pageSubtitle}>Your completed workouts will appear here.</Text>
+      <Text style={styles.pageSubtitle}>
+        Your completed workouts will appear here.
+      </Text>
 
       {/* Το Floating Action Button (FAB) */}
-      <Pressable 
-        style={styles.fab} 
+      <Pressable
+        style={styles.fab}
         onPress={() => {
           setModalVisible(true);
-          fetchExercises(); 
+          fetchExercises();
         }}
       >
         <MaterialCommunityIcons name="plus" size={30} color="white" />
       </Pressable>
 
       {/* Το "Floater" Modal */}
-      <Modal 
-        visible={modalVisible} 
-        animationType="fade" 
-        transparent={true}   
-        onRequestClose={() => setModalVisible(false)} 
+      <Modal
+        visible={modalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select an Exercise</Text>
               <Pressable onPress={() => setModalVisible(false)}>
-                <MaterialCommunityIcons name="close" size={24} color={colors.text} />
+                <MaterialCommunityIcons
+                  name="close"
+                  size={24}
+                  color={colors.text}
+                />
               </Pressable>
             </View>
 
             {loading ? (
-              <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 40 }} />
+              <ActivityIndicator
+                size="large"
+                color={colors.primary}
+                style={{ marginVertical: 40 }}
+              />
             ) : (
               <FlatList
                 data={exercises}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                  <Pressable 
-                    style={styles.listItem} 
-                    onPress={() => { 
-                      setModalVisible(false); 
+                  <Pressable
+                    style={styles.listItem}
+                    onPress={() => {
+                      setModalVisible(false);
                       router.push({
-                        pathname: '/exercise',
-                        params: { 
+                        pathname: "/exercise",
+                        params: {
                           id: item.id.toString(), // Το κάνουμε string για να μην γκρινιάζει το router
                           name: item.name,
-                          equipment_type: item.equipment_type || 'barbell',
-                          has_weights: item.has_weights === false ? 'false' : 'true'
-                        }
+                          equipment_type: item.equipment_type || "barbell",
+                          has_weights:
+                            item.has_weights === false ? "false" : "true",
+                        },
                       });
                     }}
-                    >
+                  >
                     <Text style={styles.listItemTitle}>{item.name}</Text>
-                    <Text style={styles.listItemSubtitle}>{item.target_muscle_group}</Text>
+                    <Text style={styles.listItemSubtitle}>
+                      {item.target_muscle_group}
+                    </Text>
                   </Pressable>
                 )}
-                style={{ maxHeight: 400 }} 
+                style={{ maxHeight: 400 }}
               />
             )}
 
             <View style={styles.modalFooter}>
               <Pressable style={styles.textButton}>
-                <MaterialCommunityIcons name="pencil-plus" size={20} color={colors.primary} />
+                <MaterialCommunityIcons
+                  name="pencil-plus"
+                  size={20}
+                  color={colors.primary}
+                />
                 <Text style={styles.textButtonLabel}> Create New Exercise</Text>
               </Pressable>
             </View>
-
           </View>
         </View>
       </Modal>
