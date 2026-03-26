@@ -62,13 +62,26 @@ export const useWorkoutState = create<WorkoutState>()(
         };
 
         // add new set
-        exerciseRecord.sets.push({ reps, weight, completedAt: now });
-        currentExercises[exerciseId] = exerciseRecord;
+        const existingExercise = currentExercises[exerciseId] || {
+          exerciseId,
+          name,
+          sets: [],
+        };
+
+        const updateExercise = {
+          ...existingExercise,
+          sets: [...existingExercise.sets, { reps, weight, completedAt: now }],
+        };
+
+        const nextExercise = {
+          ...currentExercises,
+          [exerciseId]: updateExercise,
+        };
 
         set({
           activeWorkoutId: currentWorkoutId,
           lastActivityTimestamp: now,
-          exercises: currentExercises,
+          exercises: nextExercise,
         });
       },
       finishWorkout: () => {

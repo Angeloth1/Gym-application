@@ -8,8 +8,8 @@ import {
   Vibration,
   View,
 } from "react-native";
-import { colors, globalStyles as styles } from "./styles/globalStyle";
-import { useWorkoutState } from "./store/workoutState";
+import { colors, globalStyles as styles } from "../styles/globalStyle";
+import { useWorkoutState } from "../store/workoutState";
 
 type EquipmentType =
   | "barbell"
@@ -260,4 +260,3 @@ export default function ExerciseScreen() {
     </ScrollView>
   );
 }
-
