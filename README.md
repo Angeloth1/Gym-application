@@ -1,39 +1,57 @@
-# 🏋️ Gym Tracker App (Name Placeholder)
+# 🏋️ Gym Tracker App
 
-A modern, frictionless fitness tracking application built with React Native (Expo) and Supabase. Designed to help users log their workouts seamlessly, track their progress, and participate in fitness challenges.
+A modern, high-performance fitness tracking application built with **React Native (Expo)** and **Supabase**. Designed for zero-friction logging, allowing you to focus on your sets, not your screen.
+
+---
+
+## 📱 App Preview
+
+| 1. Active (Collapsed) | 2. Active (Expanded) | 3. Workout Details |
+| :---: | :---: | :---: |
+| <img width="230" height="512" alt="image" src="https://github.com/user-attachments/assets/d2d9e26a-50d3-4d4e-8833-294179c3dccc" /> | <img width="230" height="512" alt="image" src="https://github.com/user-attachments/assets/d1663fe4-f163-4e1d-bff3-55db7580c6ff" /> | <img width="230" height="512" alt="image" src="https://github.com/user-attachments/assets/05c3fc46-dc98-4d38-948d-157b3c6aeefe" /> |
+| *Clean dashboard* | *Interactive session* | *Full set breakdown* |
+
+---
 
 ## ✨ Key Features
 
-- **Frictionless Logging:** Start a session, input your metrics (sets, reps, weight), and transition smoothly to the next exercise with minimal taps.
-- **Smart Auto-Titles:** Automatically generates workout session titles (e.g., "Chest & Triceps" or "Full Body") by analyzing the `target_muscle` of the completed exercises.
-- **Rich Exercise Catalog:** Comes pre-loaded with a comprehensive list of exercises, while allowing users to create custom ones.
-- **Progress & Social:** Includes dedicated tabs for tracking statistical milestones, managing user profiles, and participating in challenges (solo or with friends).
-- **Secure by Design:** Built with a strict privacy-first approach. Utilizes Supabase Authentication and PostgreSQL Row Level Security (RLS) to ensure users can only access their own data.
+### ⚡ Frictionless Logging
+* **Interactive Active Session:** A smart accordion panel that stays at the top of your screen. Expand it to see your current progress or collapse it to focus on your history.
+* **Progressive Disclosure:** Deep details (like weight and reps per set) are hidden behind modals and accordions to keep the UI clean and fast.
+* **Quick Resume:** Tap any active exercise to jump straight back into input mode.
+
+### 🧠 Intelligence
+* **Smart Auto-Titles:** Analyzes your session's muscle groups and automatically names your workout (e.g., *"Chest & Back"* or *"Leg Day"*).
+* **Auto-Archive System:** Never worry about forgetting to end a workout. The app automatically saves your session after 1 hour of inactivity.
+
+### 📊 Performance History
+* **Detailed Logs:** Every workout is stored with a full breakdown. Tap any past session to see exactly what you lifted, down to the last rep.
+
+---
 
 ## 🏗️ Tech Stack
 
-- **Frontend:** React Native, Expo, Expo Router (File-based routing)
-- **UI Components:** React Native Paper
-- **Backend & Database:** Supabase (PostgreSQL)
+* **Frontend:** React Native (Expo) with TypeScript
+* **State Management:** **Zustand** (utilizing `useShallow` for optimized renders and `persist` for local storage)
+* **Navigation:** Expo Router (File-based)
+* **Backend:** Supabase (PostgreSQL + Auth + Row Level Security)
+* **Icons:** Material Community Icons
+
+---
 
 ## 🗄️ Database Architecture
 
-The application relies on a robust relational database model to group individual exercises under unified workout sessions:
+The application relies on a robust relational model:
 
-- `profiles`: User information, securely linked to the authentication system.
-- `workouts`: The umbrella session entity (stores the auto-generated title, date, and owner).
-- `exercises`: The catalog of available exercises and their targeted muscle groups.
-- `workout_exercises`: The junction table recording the exact metrics (sets, reps, weight) for every exercise performed during a specific workout.
+* `profiles`: Secure user metadata linked to Supabase Auth.
+* `workouts`: Unified session entity (stores the auto-generated title, date, and owner).
+* `exercises`: Global catalog of exercises and target muscle groups.
+* `workout_exercises`: Junction table recording exact metrics (sets, reps, weight) for every exercise performed.
+
+---
 
 ## 🚀 Getting Started
 
-To get a local copy up and running, follow these steps.
-
 ### Prerequisites
-Make sure you have Node.js and npm installed on your machine. You will also need the Expo Go app on your mobile device (or an iOS/Android emulator).
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone [https://github.com/your-username/gym-app.git](https://github.com/your-username/gym-app.git)**
+* Node.js (v18+)
+* Expo Go app on your mobile device.
