@@ -8,13 +8,13 @@ export const colors = {
   textLight: "#aaa",
   primary: "#007AFF",
   warning: "#F59E0B",
+  border: "#eee",
   success: "#28a745",
   danger: "#dc3545",
   inputBg: "#f8f9fa",
   inputBorder: "#e9ecef",
   inputLocked: "#e9ecef",
   stepperBg: "#e0eaff",
-  border: "#eee",
   overlay: "rgba(0,0,0,0.5)",
 };
 
