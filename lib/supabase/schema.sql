@@ -1,4 +1,11 @@
--- 1. Φτιάχνουμε τον πίνακα Profiles σωστά συνδεδεμένο με το Auth του Supabase
+-- 1. ΚΑΘΑΡΙΣΜΟΣ ΤΟΥ ΠΑΛΙΟΥ SCHEMA (Προσοχή: Διαγράφει τα πάντα)
+DROP TABLE IF EXISTS workout_exercises CASCADE; -- Αντίο στο παλιό λάθος
+DROP TABLE IF EXISTS workout_sets CASCADE;
+DROP TABLE IF EXISTS workouts CASCADE;
+DROP TABLE IF EXISTS exercises CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+
+-- 2. PROFILES
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   name TEXT NOT NULL,
@@ -8,68 +15,60 @@ CREATE TABLE profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Προσθέτουμε τη στήλη user_id στις προπονήσεις για να ξέρουμε ποιανού είναι
-ALTER TABLE workouts 
-ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL;
+-- 3. EXERCISES (Ο Κατάλογος Ασκήσεων)
+CREATE TABLE exercises (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  "nameNonEng" TEXT,
+  target_muscle TEXT NOT NULL,
+  equipment_type TEXT CHECK (equipment_type IN ('barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'none', 'other')) DEFAULT 'barbell',
+  has_weights BOOLEAN DEFAULT TRUE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- NULL σημαίνει Global άσκηση
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- 3. Ξυπνάμε τον "Πορτιέρη" (Ενεργοποίηση Row Level Security) σε όλους τους πίνακες
+-- 4. WORKOUTS (Το Session)
+CREATE TABLE workouts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  ended_at TIMESTAMP WITH TIME ZONE -- NULL σημαίνει ότι η προπόνηση είναι Active
+);
+
+-- 5. WORKOUT_SETS (Το Granular Tracking - Η Καρδιά του App)
+CREATE TABLE workout_sets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  workout_id UUID REFERENCES workouts(id) ON DELETE CASCADE NOT NULL,
+  exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE NOT NULL,
+  set_number INTEGER NOT NULL,
+  reps INTEGER NOT NULL,
+  weight NUMERIC NOT NULL,
+  is_warmup BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6. RLS & ΑΣΦΑΛΕΙΑ (Ενεργοποίηση του "Πορτιέρη")
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE workout_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exercises ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workout_sets ENABLE ROW LEVEL SECURITY;
 
--- 4. Οι Κανόνες του Πορτιέρη (Policies)
-
--- PROFILES: Ο χρήστης βλέπει και αλλάζει ΜΟΝΟ το δικό του προφίλ
+-- 7. POLICIES (Οι Κανόνες Πρόσβασης)
+-- Profiles
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- WORKOUTS: Ο χρήστης βλέπει και φτιάχενι ΜΟΝΟ τις δικές του προπονήσεις
-CREATE POLICY "Users manage own workouts" ON workouts FOR ALL USING (auth.uid() = user_id);
+-- Exercises
+CREATE POLICY "Users can read global and own exercises" ON exercises FOR SELECT USING (user_id IS NULL OR user_id = auth.uid());
+CREATE POLICY "Users can insert own exercises" ON exercises FOR INSERT WITH CHECK (user_id = auth.uid());
+-- (Κανείς δεν μπορεί να κάνει UPDATE/DELETE τα έτοιμα exercises)
 
--- WORKOUT_EXERCISES: Ο χρήστης πειράζει ασκήσεις ΜΟΝΟ αν η προπόνηση είναι δική του
-CREATE POLICY "Users manage own workout exercises" ON workout_exercises 
-FOR ALL USING (
+-- Workouts
+CREATE POLICY "Users manage own workouts" ON workouts FOR ALL USING (user_id = auth.uid());
+
+-- Sets
+CREATE POLICY "Users manage own sets" ON workout_sets FOR ALL USING (
   workout_id IN (SELECT id FROM workouts WHERE user_id = auth.uid())
 );
-
--- EXERCISES (Ο Κατάλογος): Όλοι μπορούν να διαβάσουν τις έτοιμες ασκήσεις, κανείς δεν μπορεί να τις σβήσει
-CREATE POLICY "Everyone can read exercises" ON exercises FOR SELECT USING (true);
-
--- 5. Ο Κατάλογος των Ασκήσεων
-CREATE TABLE exercises (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  target_muscle TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 6. Η "Ομπρέλα" της Προπόνησης
-CREATE TABLE workouts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 7. Ο Ενδιάμεσος Κρίκος (Οι μετρικές της άσκησης μέσα στην προπόνηση)
-CREATE TABLE workout_exercises (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  workout_id UUID REFERENCES workouts(id) ON DELETE CASCADE,
-  exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE,
-  sets INTEGER NOT NULL,
-  reps INTEGER NOT NULL,
-  weight NUMERIC NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- Ενημέρωση του πίνακα exercises με τις νέες κατηγορίες
-ALTER TABLE exercises 
-ADD COLUMN has_weights BOOLEAN DEFAULT TRUE,
-ADD COLUMN equipment_type TEXT CHECK (equipment_type IN ('machine', 'smith', 'barbell', 'dumbbell', 'bodyweight')) DEFAULT 'barbell';
-
--- Παράδειγμα ενημέρωσης δεδομένων
-UPDATE exercises SET equipment_type = 'barbell', has_weights = TRUE WHERE name ILIKE '%bench press%';
-UPDATE exercises SET equipment_type = 'dumbbell', has_weights = TRUE WHERE name ILIKE '%dumbbell%';
-UPDATE exercises SET equipment_type = 'machine', has_weights = TRUE WHERE name ILIKE '%lat pulldown%';
-UPDATE exercises SET equipment_type = 'bodyweight', has_weights = FALSE WHERE name ILIKE '%push up%';
