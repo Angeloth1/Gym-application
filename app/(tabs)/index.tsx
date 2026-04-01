@@ -23,7 +23,7 @@ export default function MainScreen() {
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [selectedWorkout, setSelectedWorkout] =
     useState<CompletedWorkout | null>(null);
-  const [activeExpanded, setActiveExpanded] = useState(true); // Ξεκινάει ανοιχτό για να βλέπεις τι κάνεις
+  const [activeExpanded, setActiveExpanded] = useState(true);
   const [exercises, setExercises] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -58,7 +58,7 @@ export default function MainScreen() {
     <View style={styles.mainContainer}>
       <Text style={styles.pageTitle}>Workout Tracker</Text>
 
-      {/* --- 1. ACTIVE SESSION (GROUPED ACCORDION) --- */}
+      {/* --- 1. ACTIVE SESSION --- */}
       {activeExercises.length > 0 && (
         <View style={{ marginBottom: 25 }}>
           <Pressable
@@ -102,7 +102,6 @@ export default function MainScreen() {
             />
           </Pressable>
 
-          {/* Εδώ είναι η λίστα που "ανοίγει" από κάτω */}
           {activeExpanded && (
             <View
               style={{
@@ -115,7 +114,7 @@ export default function MainScreen() {
             >
               {activeExercises.map((ex) => (
                 <Pressable
-                  key={ex.exerciseId}
+                  key={ex.exerciseDetails.id}
                   style={{
                     flexDirection: "row",
                     justifyContent: "space-between",
@@ -127,9 +126,9 @@ export default function MainScreen() {
                     router.push({
                       pathname: "/exercise",
                       params: {
-                        id: ex.exerciseId,
-                        name: ex.name,
-                        target_muscle_group: ex.target_muscle_group,
+                        id: ex.exerciseDetails.id,
+                        name: ex.exerciseDetails.name,
+                        target_muscle: ex.exerciseDetails.target_muscle,
                       },
                     })
                   }
@@ -142,7 +141,7 @@ export default function MainScreen() {
                         fontSize: 15,
                       }}
                     >
-                      {ex.name}
+                      {ex.exerciseDetails.name}
                     </Text>
                     <Text style={{ color: colors.textMuted, fontSize: 13 }}>
                       {ex.sets.length} sets so far
@@ -169,7 +168,7 @@ export default function MainScreen() {
 
       <FlatList
         data={history}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.workout.id}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <Pressable
@@ -180,10 +179,10 @@ export default function MainScreen() {
             }}
           >
             <View style={{ flex: 1 }}>
-              <Text style={styles.historyCardTitle}>{item.name}</Text>
+              <Text style={styles.historyCardTitle}>{item.workout.title}</Text>
               <Text style={styles.historyCardSubtitle}>
                 {item.exercises.length} Exercises •{" "}
-                {new Date(item.date).toLocaleDateString("el-GR")}
+                {new Date(item.workout.created_at).toLocaleDateString("el-GR")}
               </Text>
             </View>
             <MaterialCommunityIcons
@@ -212,10 +211,14 @@ export default function MainScreen() {
           <View style={[styles.modalBox, { maxHeight: "85%" }]}>
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>{selectedWorkout?.name}</Text>
+                <Text style={styles.modalTitle}>
+                  {selectedWorkout?.workout.title}
+                </Text>
                 <Text style={{ color: colors.textMuted }}>
                   {selectedWorkout
-                    ? new Date(selectedWorkout.date).toLocaleDateString()
+                    ? new Date(
+                        selectedWorkout.workout.created_at,
+                      ).toLocaleDateString()
                     : ""}
                 </Text>
               </View>
@@ -247,7 +250,7 @@ export default function MainScreen() {
                       marginBottom: 8,
                     }}
                   >
-                    {ex.name}
+                    {ex.exerciseDetails.name}
                   </Text>
                   {ex.sets.map((set, sIdx) => (
                     <View
@@ -259,7 +262,7 @@ export default function MainScreen() {
                       }}
                     >
                       <Text style={{ color: colors.text, fontSize: 14 }}>
-                        Set {sIdx + 1}
+                        Set {set.set_number}
                       </Text>
                       <Text style={{ fontWeight: "600", fontSize: 14 }}>
                         {set.weight}kg x {set.reps} reps
@@ -273,7 +276,7 @@ export default function MainScreen() {
         </View>
       </Modal>
 
-      {/* MODAL: ΕΠΙΛΟΓΗ ΝΕΑΣ ΑΣΚΗΣΗΣ */}
+      {/* --- 4. MODAL: ΕΠΙΛΟΓΗ ΝΕΑΣ ΑΣΚΗΣΗΣ --- */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -303,7 +306,7 @@ export default function MainScreen() {
                 >
                   <Text style={styles.listItemTitle}>{item.name}</Text>
                   <Text style={styles.listItemSubtitle}>
-                    {item.target_muscle_group}
+                    {item.target_muscle}
                   </Text>
                 </Pressable>
               )}

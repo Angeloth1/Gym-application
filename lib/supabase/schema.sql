@@ -44,7 +44,6 @@ CREATE TABLE workout_sets (
   set_number INTEGER NOT NULL,
   reps INTEGER NOT NULL,
   weight NUMERIC NOT NULL,
-  is_warmup BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -58,7 +57,7 @@ ALTER TABLE workout_sets ENABLE ROW LEVEL SECURITY;
 -- Profiles
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can u.workout.created_at own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Exercises
 CREATE POLICY "Users can read global and own exercises" ON exercises FOR SELECT USING (user_id IS NULL OR user_id = auth.uid());

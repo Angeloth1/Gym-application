@@ -10,24 +10,22 @@ import {
 } from "react-native";
 import { colors, globalStyles as styles } from "../styles/globalStyle";
 import { useWorkoutState } from "../store/workoutState";
+import { Exercise } from "../types/database"; // ΠΡΟΣΘΗΚΗ: Φέρνουμε το αυστηρό type της βάσης
 
-type EquipmentType =
-  | "barbell"
-  | "machine"
-  | "dumbbell"
-  | "smith"
-  | "bodyweight";
 type SetRecord = { id: number; weight: string; reps: string };
 
 export default function ExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const exerciseData = {
+
+  // ΑΝΑΔΟΜΗΣΗ: Φτιάχνουμε το object της άσκησης ακριβώς όπως το περιμένει το Zustand
+  const exerciseData: Exercise = {
     id: params.id as string,
     name: (params.name as string) || "Unknown Exercise",
-    equipment_type: (params.equipment_type as EquipmentType) || "barbell",
+    target_muscle: (params.target_muscle as string) || null,
+    equipment_type: (params.equipment_type as string) || "barbell",
     has_weights: params.has_weights === "true",
-  };
+  } as Exercise; // Το "as Exercise" καλύπτει πεδία που βάζει αυτόματα το Supabase (π.χ. created_at)
 
   // --- STATES ---
   const [inSet, setInSet] = useState(true);
@@ -41,7 +39,6 @@ export default function ExerciseScreen() {
   const numReps = parseInt(reps, 10) || 0;
   const numWeight = parseFloat(weight) || 0;
 
-  // Το Finish Set παραμένει όπως το ζήτησες: Γκρι αν είναι 0, Πράσινο αν > 0.
   const canFinishSet = numReps > 0;
 
   useEffect(() => {
@@ -67,12 +64,12 @@ export default function ExerciseScreen() {
       setHistory([newSet, ...history]); // Τοπική μνήμη UI
 
       // --- Ο ΕΓΚΕΦΑΛΟΣ (ZUSTAND) ---
-      addSet(exerciseData.id, exerciseData.name, Number(reps), Number(weight));
+      // Πλέον περνάμε ΟΛΟΚΛΗΡΟ το object της άσκησης (exerciseData), τα κιλά και τις επαναλήψεις.
+      addSet(exerciseData, Number(reps), Number(weight));
 
       setInSet(false);
       setClock(180);
     } else {
-      // Κρατάει τις επαναλήψεις ίδιες με πριν (Reps persistence)
       setInSet(true);
     }
   };

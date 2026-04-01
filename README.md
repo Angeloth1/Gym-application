@@ -44,7 +44,7 @@ A modern, high-performance fitness tracking application built with **React Nativ
 The application relies on a robust relational model:
 
 * `profiles`: Secure user metadata linked to Supabase Auth.
-* `workouts`: Unified session entity (stores the auto-generated title, date, and owner).
+* `workouts`: Unified session entity (stores the auto-generated title,.workout.created_at, and owner).
 * `exercises`: Global catalog of exercises and target muscle groups.
 * `workout_exercises`: Junction table recording exact metrics (sets, reps, weight) for every exercise performed.
 
