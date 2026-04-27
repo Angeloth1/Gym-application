@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { colors, globalStyles as styles } from "../styles/globalStyle";
 import { useWorkoutState } from "../store/workoutState";
-import { Exercise } from "../types/database"; // ΠΡΟΣΘΗΚΗ: Φέρνουμε το αυστηρό type της βάσης
+import { Exercise } from "../types/database";
 
 type SetRecord = { id: number; weight: string; reps: string };
 
@@ -18,59 +18,74 @@ export default function ExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // ΑΝΑΔΟΜΗΣΗ: Φτιάχνουμε το object της άσκησης ακριβώς όπως το περιμένει το Zustand
   const exerciseData: Exercise = {
     id: params.id as string,
     name: (params.name as string) || "Unknown Exercise",
     target_muscle: (params.target_muscle as string) || null,
     equipment_type: (params.equipment_type as string) || "barbell",
     has_weights: params.has_weights === "true",
-  } as Exercise; // Το "as Exercise" καλύπτει πεδία που βάζει αυτόματα το Supabase (π.χ. created_at)
+  } as Exercise;
 
   // --- STATES ---
   const [inSet, setInSet] = useState(true);
-  const [clock, setClock] = useState(180);
+  const [clock, setClock] = useState(0);
   const [weight, setWeight] = useState(
     exerciseData.equipment_type === "barbell" ? "20" : "10",
   );
   const [reps, setReps] = useState("");
   const [history, setHistory] = useState<SetRecord[]>([]);
+
+  // --- ZUSTAND: Ασφαλής εξαγωγή δεδομένων (Zero Infinite Loops) ---
   const addSet = useWorkoutState((state) => state.addSet);
+  const restEndTime = useWorkoutState((state) => state.restEndTime);
+  const startRest = useWorkoutState((state) => state.startRest);
+  const clearRest = useWorkoutState((state) => state.clearRest);
+
   const numReps = parseInt(reps, 10) || 0;
   const numWeight = parseFloat(weight) || 0;
-
   const canFinishSet = numReps > 0;
 
+  // --- Ο ΝΕΟΣ ΚΙΝΗΤΗΡΑΣ (TIMESTAMP MATH) ---
   useEffect(() => {
     let interval: any;
-    if (!inSet) {
-      interval = setInterval(() => {
-        setClock((prev) => {
-          if (prev <= 1) {
-            Vibration.vibrate();
-            setInSet(true);
-            return 180;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [inSet]);
 
+    if (restEndTime) {
+      setInSet(false);
+
+      interval = setInterval(() => {
+        const now = Date.now();
+        const remainingMs = restEndTime - now;
+
+        if (remainingMs <= 0) {
+          Vibration.vibrate();
+          clearRest();
+          setInSet(true);
+          setClock(0);
+        } else {
+          setClock(Math.ceil(remainingMs / 1000));
+        }
+      }, 500);
+    } else {
+      setInSet(true);
+      setClock(180);
+    }
+
+    return () => clearInterval(interval);
+  }, [restEndTime, clearRest]);
+
+  // --- ACTION HANDLER ---
   const handleMainAction = () => {
     if (inSet) {
       const newSet = { id: history.length + 1, weight, reps };
-      setHistory([newSet, ...history]); // Τοπική μνήμη UI
+      setHistory([newSet, ...history]);
 
-      // --- Ο ΕΓΚΕΦΑΛΟΣ (ZUSTAND) ---
-      // Πλέον περνάμε ΟΛΟΚΛΗΡΟ το object της άσκησης (exerciseData), τα κιλά και τις επαναλήψεις.
       addSet(exerciseData, Number(reps), Number(weight));
 
-      setInSet(false);
-      setClock(180);
+      // Ξεκινάμε το απόλυτο ρολόι (3 λεπτά = 180.000 ms)
+      startRest(180000);
     } else {
-      setInSet(true);
+      // Αν πατήσει Stop Rest νωρίτερα, καθαρίζουμε το target
+      clearRest();
     }
   };
 
@@ -184,7 +199,7 @@ export default function ExerciseScreen() {
           </View>
         </View>
 
-        {/* ΚΥΡΙΟ ΚΟΥΜΠΙ (FINISH SET / STOP REST) */}
+        {/* ΚΥΡΙΟ ΚΟΥΜΠΙ */}
         <Pressable
           style={[
             styles.button,
@@ -238,7 +253,7 @@ export default function ExerciseScreen() {
           </View>
         )}
 
-        {/* ΤΟ DONE ΚΟΥΜΠΙ - ΠΕΤΑΕΙ ΣΤΗΝ ΑΡΧΙΚΗ */}
+        {/* ΤΟ DONE ΚΟΥΜΠΙ */}
         <View style={{ width: "100%", marginTop: 30 }}>
           <Pressable
             style={({ pressed }) => [
@@ -246,8 +261,8 @@ export default function ExerciseScreen() {
               { backgroundColor: colors.primary, opacity: pressed ? 0.7 : 1 },
             ]}
             onPress={() => {
-              console.log("Workout Done - Heading Home");
-              router.replace("/"); // Σε πετάει στην αρχική οθόνη
+              clearRest();
+              router.replace("/");
             }}
           >
             <Text style={styles.buttonText}>Done</Text>

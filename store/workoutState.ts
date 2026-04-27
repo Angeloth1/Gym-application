@@ -32,6 +32,10 @@ type WorkoutState = {
   addSet: (exercise: Exercise, reps: number, weight: number) => void;
   finishWorkout: () => void;
   checkActiveSession: () => void;
+
+  restEndTime: number | null;
+  startRest: (durationMs: number) => void;
+  clearRest: () => void;
 };
 
 export const useWorkoutState = create<WorkoutState>()(
@@ -41,6 +45,15 @@ export const useWorkoutState = create<WorkoutState>()(
       lastActivityTimestamp: null,
       exercises: {},
       history: [],
+
+      restEndTime: null,
+      startRest: (durationMs) => {
+        set({ restEndTime: Date.now() + durationMs });
+      },
+
+      clearRest: () => {
+        set({ restEndTime: null });
+      },
 
       addSet: (exercise, reps, weight) => {
         get().checkActiveSession();
